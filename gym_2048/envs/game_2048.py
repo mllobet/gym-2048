@@ -1,15 +1,37 @@
+import gym
+from gym import error, spaces, utils, Space, spaces
+from gym.utils import seeding
+
 import random
+import numpy as np
 
 class Game:
+    """ 2048 Game class """
 
     def __init__(self, N=4, start_tiles=2):
         self.N = N
         self.score = 0
+        self.ended = False
+        self.won = False
         self.start_tiles = start_tiles
-        self.board = [[0]*N for i in range(N)]
-        self.merged = [[False]*N for i in range(N)]
+        self.board = [[0]*self.N for i in range(self.N)]
+        self.merged = [[False]*self.N for i in range(self.N)]
         
         self.add_start_tiles()
+
+
+    def reset_game(self):
+        self.score = 0
+        self.ended = False
+        self.won = False
+        self.board = [[0]*self.N for i in range(self.N)]
+        self.merged = [[False]*self.N for i in range(self.N)]
+        
+        self.add_start_tiles()
+
+
+    def get_board(self):
+        return self.board
 
 
     def add_start_tiles(self):
@@ -42,6 +64,7 @@ class Game:
 
 
     def find_furthest(self, row, col, vector):
+        """ finds furthest cell interactable (empty or same value) """
         found = False
         val = self.board[row][col]
         i = row + vector['y']
@@ -70,10 +93,31 @@ class Game:
             return {'x': -1, 'y': 0}
 
 
+    def moves_available(self):
+        for direction in range(4):
+            dir_vector = self.create_vector(direction)
+            traversal_y, traversal_x = self.create_traversal(dir_vector)        
+
+            for row in traversal_y:
+                for col in traversal_x:
+                    val = self.board[row][col]
+
+                    if val:
+                        n_row, n_col = self.find_furthest(row, col, dir_vector)
+
+                        if not ((n_row,n_col) == (row,col)):
+                            n_val = self.board[n_row][n_col]
+                            if (val == n_val and not self.merged[n_row][n_col]) or (n_val == 0):
+                                return True
+
+        return False
+
+
     def move(self, direction):
         # up: 0, right: 1, down: 2, left: 3
         dir_vector = self.create_vector(direction)
         traversal_y, traversal_x = self.create_traversal(dir_vector)        
+        reward = 0
 
         moved = False
         for row in traversal_y:
@@ -91,7 +135,9 @@ class Game:
                             self.board[row][col] = 0
                             self.merged[n_row][n_col] = True
 
-                            self.score += val*2
+                            reward = val*2
+                            self.score += reward
+                            self.won = (val == 1024)
                             moved = True
                         # move
                         elif self.board[n_row][n_col] == 0:
@@ -105,6 +151,10 @@ class Game:
         if moved:
             self.add_random()
 
+        self.ended = not self.moves_available() or self.won 
+
+        return reward, self.ended
+
 
     def __str__(self):
         max_len = len(str(max(max(self.board))))
@@ -116,3 +166,30 @@ class Game:
         board_str += "Score: {}\n".format(self.score)
         return board_str            
 
+
+class Game2048(gym.Env):
+    metadata = {'render.modes': ['human', 'ansi']}
+
+    def __init__(self):
+        self.action_space = spaces.Discrete(4)
+        self.observation_space = spaces.Tuple((spaces.Discrete(4), spaces.Discrete(4)))
+        self.reward_range = (0,np.inf)
+
+        self.env = Game()
+        self.env.reset_game()
+
+    def _step(self, action):
+        assert self.action_space.contains(action)
+
+        reward, ended = self.env.move(action)
+        return self.env.get_board(), reward, ended, {'score': self.env.score, 'won': self.env.won}
+
+    def _reset(self):
+        self.env.reset_game()
+        return self.env.get_board()
+
+    def _render(self, mode='human', close=False):
+        if mode in ['human', 'ansi']:
+            return str(self.env)
+
+        return False
