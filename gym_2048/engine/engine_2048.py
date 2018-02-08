@@ -3,7 +3,7 @@ import random
 class Engine:
     """ 2048 Game class """
 
-    def __init__(self, N=4, start_tiles=2):
+    def __init__(self, N=4, start_tiles=2, seed=None):
         self.N = N
         self.score = 0
         self.ended = False
@@ -12,6 +12,9 @@ class Engine:
         self.start_tiles = start_tiles
         self.board = [[0]*self.N for i in range(self.N)]
         self.merged = [[False]*self.N for i in range(self.N)]
+
+        if seed:
+            random.seed(seed)
         
         self.add_start_tiles()
 

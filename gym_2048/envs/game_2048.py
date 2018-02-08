@@ -14,12 +14,12 @@ class Game2048(gym.Env):
     def flatten(self, l):
         return [item for sublist in l for item in sublist]
 
-    def __init__(self):
+    def __init__(self, seed=None):
         self.action_space = spaces.Discrete(4)
         self.observation_space = spaces.Discrete(4*4)
         self.reward_range = (0,np.inf)
 
-        self.env = Engine()
+        self.env = Engine(seed=seed)
         self.env.reset_game()
 
     def _step(self, action):
