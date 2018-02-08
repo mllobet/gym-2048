@@ -135,7 +135,7 @@ class Engine:
 
                             reward = val*2
                             self.score += reward
-                            self.won = (val == 1024)
+                            self.won = (reward == 2048)
                             moved = True
                         # move
                         elif self.board[n_row][n_col] == 0:
