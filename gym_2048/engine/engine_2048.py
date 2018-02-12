@@ -94,6 +94,7 @@ class Engine:
 
 
     def moves_available(self):
+        moves = [False]*4
         for direction in range(4):
             dir_vector = self.create_vector(direction)
             traversal_y, traversal_x = self.create_traversal(dir_vector)        
@@ -108,9 +109,9 @@ class Engine:
                         if not ((n_row,n_col) == (row,col)):
                             n_val = self.board[n_row][n_col]
                             if (val == n_val and not self.merged[n_row][n_col]) or (n_val == 0):
-                                return True
+                                moves[direction] = True
 
-        return False
+        return moves
 
 
     def move(self, direction):
@@ -136,7 +137,7 @@ class Engine:
                             self.board[row][col] = 0
                             self.merged[n_row][n_col] = True
 
-                            reward = val*2
+                            reward += val*2
                             self.score += reward
                             self.won = (reward == 2048)
                             moved = True
@@ -152,7 +153,9 @@ class Engine:
         if moved:
             self.add_random()
 
-        self.ended = not self.moves_available() or self.won 
+        self.ended = not True in self.moves_available() or self.won 
+        if self.ended and not self.won:
+            reward = -1
 
         return reward, self.ended
 

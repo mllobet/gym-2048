@@ -16,7 +16,7 @@ class Game2048(gym.Env):
 
     def __init__(self, seed=None):
         self.action_space = spaces.Discrete(4)
-        self.observation_space = spaces.Discrete(4*4)
+        self.observation_space = spaces.Discrete(12*4*4)
         self.reward_range = (0,np.inf)
 
         self.env = Engine(seed=seed)
@@ -26,14 +26,15 @@ class Game2048(gym.Env):
         assert self.action_space.contains(action)
 
         reward, ended = self.env.move(action)
-        return self.flatten(self.env.get_board()), reward, ended, {'score': self.env.score, 'won': self.env.won}
+        return self.env.get_board(), reward, ended, {'score': self.env.score, 'won': self.env.won}
 
     def _reset(self):
         self.env.reset_game()
-        return self.flatten(self.env.get_board())
+        return self.env.get_board()
 
     def _render(self, mode='human', close=False):
         outfile = StringIO() if mode == 'ansi' else sys.stdout
         outfile.write(str(self.env))
 
-
+    def moves_available(self):
+        return self.env.moves_available()
