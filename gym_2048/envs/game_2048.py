@@ -18,7 +18,7 @@ class Game2048(gym.Env):
         self.action_space = spaces.Discrete(4)
         self.observation_space = spaces.Discrete(12*4*4)
         self.reward_range = (0,np.inf)
-
+        self._seed = seed
         self.env = Engine(seed=seed)
         self.env.reset_game()
 
